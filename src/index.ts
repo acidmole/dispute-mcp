@@ -5,12 +5,16 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import {
   AnalyzeDocumentInputSchema,
   SearchLegalInputSchema,
   GenerateDisputeInputSchema,
 } from "./data/schemas.js";
+import { DOCUMENT_TEMPLATES } from "./data/document-templates.js";
+import { buildDocumentPrompt } from "./services/prompt-builder.js";
 import { analyzeDocument } from "./tools/analyze-document.js";
 import { searchLegalTool } from "./tools/search-legal.js";
 import { generateDisputeTool } from "./tools/generate-dispute.js";
@@ -23,11 +27,73 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
+      prompts: {},
     },
   }
 );
 
-// List available tools
+// --- Prompts: document type templates ---
+
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: DOCUMENT_TEMPLATES.map((t) => ({
+      name: t.id,
+      description: `${t.name} — ${t.description}. Oikeusperusta: ${t.legalBasis}`,
+      arguments: [
+        {
+          name: "context",
+          description: "Lyhyt kuvaus tilanteesta tai lisäkonteksti (vapaamuotoinen)",
+          required: false,
+        },
+      ],
+    })),
+  };
+});
+
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+  const template = DOCUMENT_TEMPLATES.find((t) => t.id === name);
+  if (!template) {
+    throw new Error(`Tuntematon asiakirjatyyppi: ${name}`);
+  }
+
+  const context = (args?.context as string) || "";
+  const prompt = buildDocumentPrompt(template, context);
+
+  return {
+    description: template.name,
+    messages: [
+      {
+        role: "user" as const,
+        content: {
+          type: "text" as const,
+          text: prompt,
+        },
+      },
+    ],
+  };
+});
+
+// --- Tools ---
+
+const ALL_DISPUTE_TYPES = [
+  "karajaoikeus_vastaus",
+  "reklamaatio",
+  "kril_hakemus",
+  "laskun_kiistaminen",
+  "perinnan_kiistaminen",
+  "hallinto_valitus",
+  "vakuutus_oikaisu",
+  "vuokra_reklamaatio",
+  "vahingonkorvaus",
+  "takaisinsaanti",
+  "invoice_denial",
+  "court_response",
+  "complaint",
+  "claim",
+  "objection",
+];
+
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
@@ -92,20 +158,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "generate_dispute",
         description:
-          "Generate a structured Finnish legal dispute document (invoice denial, court response, complaint, claim, or objection). Combines document analysis, legal references, and user arguments into a complete dispute document with proper legal citations. Output is in structured markdown.",
+          "Generate a structured Finnish legal document. Supports 10 document types with legally correct structure: käräjäoikeuden vastaus, reklamaatio, KRIL-hakemus, laskun/perinnän kiistäminen, hallintovalitus, vakuutusoikaisu, vuokrareklamaatio, vahingonkorvaus, takaisinsaanti. Use the MCP prompts to get structural guidance before generating. Combines document analysis, legal references, and user arguments into a complete document with proper legal citations.",
         inputSchema: {
           type: "object" as const,
           properties: {
             dispute_type: {
               type: "string",
-              enum: [
-                "invoice_denial",
-                "court_response",
-                "complaint",
-                "claim",
-                "objection",
-              ],
-              description: "Type of dispute to generate",
+              enum: ALL_DISPUTE_TYPES,
+              description: "Type of legal document to generate. Use template-based types (karajaoikeus_vastaus, reklamaatio, etc.) for structured output.",
             },
             document_analysis: {
               type: "object",

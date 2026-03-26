@@ -5,8 +5,8 @@ build/
 # Dependencies
 node_modules/
 
-# Data (generated, large)
-data/
+# Data (generated, large - LanceDB vectors)
+/data/
 
 # Environment & secrets
 .env
