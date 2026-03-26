@@ -12,7 +12,7 @@ Palvelin indeksoi viidestä julkisesta oikeuslähteestä ja hakee niistä semant
 
 | Lähde | Tyyppi | Sisältö | Lähde |
 |-------|--------|---------|-------|
-| **Säädökset** | `law` | 18 kuluttajaoikeuden keskeistä lakia | [Finlex Open Data](https://opendata.finlex.fi) |
+| **Ajantasainen lainsäädäntö** | `law` | 18 kuluttajaoikeuden keskeistä lakia (ajantasaiset konsolidoidut versiot) | [Finlex Open Data](https://opendata.finlex.fi) |
 | **KKO** | `kko_ruling` | Korkeimman oikeuden ennakkopäätökset | Finlex Open Data |
 | **KHO** | `kho_ruling` | Korkeimman hallinto-oikeuden päätökset | Finlex Open Data |
 | **HE** | `he_document` | Hallituksen esitykset (lain esityöt) | Finlex Open Data |
@@ -140,7 +140,28 @@ src/
 
 ### Finlex Open Data API
 
-Säädökset, oikeuskäytäntö ja hallituksen esitykset haetaan [Finlex Open Data API:sta](https://opendata.finlex.fi) Akoma Ntoso XML -muodossa. Lisenssi: CC BY 4.0 (ajantasainen lainsäädäntö CC BY-NC 4.0).
+Ajantasainen lainsäädäntö, oikeuskäytäntö ja hallituksen esitykset haetaan [Finlex Open Data API:sta](https://opendata.finlex.fi) Akoma Ntoso XML -muodossa. Säädökset haetaan konsolidoituina ajantasaisina versioina, jotka sisältävät kaikki voimassa olevat muutokset. Lisenssi: CC BY 4.0 (ajantasainen lainsäädäntö CC BY-NC 4.0).
+
+Indeksoidut lait:
+
+- Kuluttajansuojalaki (38/1978)
+- Oikeudenkäymiskaari (4/1734)
+- Vahingonkorvauslaki (412/1974)
+- Korkolaki (633/1982)
+- Laki saatavien perinnästä (513/1999)
+- Asuntokauppalaki (843/1994)
+- Työsopimuslaki (55/2001)
+- Perustuslaki (731/1999)
+- Laki varallisuusoikeudellisista oikeustoimista (228/1929)
+- Kauppalaki (120/1966)
+- Laki kuluttajariitalautakunnasta (746/2013)
+- Maakaari (1552/1995)
+- Laki asuinhuoneiston vuokrauksesta (746/2005)
+- Laki sähköisestä viestinnästä (460/2007)
+- Rikoslaki, 36 luku – petokset (527/2013)
+- Kuluttajaturvallisuuslaki (100/2010)
+- Laki velan vanhentumisesta (1118/1996)
+- Tietosuojalaki (228/2004)
 
 ### Kuluttajariitalautakunta
 
