@@ -178,6 +178,10 @@ KRIL-ratkaisut haetaan [kuluttajariita.fi](https://www.kuluttajariita.fi/paatoks
 
 Tekijät eivät vastaa työkalun käytöstä aiheutuvista vahingoista.
 
+## Kiitokset
+
+MCP-työkalut kehitetty [@hoblin](https://github.com/hoblin):n MCP-tooling-ratkaisujen pohjalta.
+
 ## Lisenssi
 
 MIT
