@@ -324,7 +324,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "search_legal": {
-        const input = SearchLegalInputSchema.parse(args);
+        const input = SearchLegalInputSchema.parse(args) as {
+          query: string;
+          source_type?: string;
+          legal_area?: string;
+          limit?: number;
+        };
         const results = await searchLegalTool(input);
         return {
           content: [
