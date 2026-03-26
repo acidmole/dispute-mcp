@@ -12,6 +12,7 @@ export const AnalyzeDocumentInputSchema = z.object({
   file_path: z
     .string()
     .optional()
+    .refine((p) => !p || !p.includes(".."), "Path traversal not allowed")
     .describe("Absolute path to PDF, image, or text file to analyze"),
   text: z
     .string()
@@ -31,6 +32,8 @@ export const SearchLegalInputSchema = z.object({
   ),
   legal_area: z
     .string()
+    .max(100)
+    .regex(/^[a-zäöåA-ZÄÖÅ\s-]+$/, "Legal area must contain only letters, spaces, and hyphens")
     .optional()
     .describe(
       'Filter by legal area, e.g. "kuluttajansuoja", "sopimusoikeus", "työoikeus"'
@@ -87,6 +90,7 @@ export const GenerateDisputeInputSchema = z.object({
     .describe("Legal references from search_legal tool"),
   user_arguments: z
     .string()
+    .max(50000, "Arguments too long")
     .describe(
       "User's own reasoning, facts, and arguments for the dispute"
     ),
