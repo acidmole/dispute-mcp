@@ -12,6 +12,18 @@ export type DocumentType = z.infer<typeof DocumentTypeSchema>;
 
 // Dispute types that can be generated
 export const DisputeTypeSchema = z.enum([
+  // Template-based types
+  "karajaoikeus_vastaus",
+  "reklamaatio",
+  "kril_hakemus",
+  "laskun_kiistaminen",
+  "perinnan_kiistaminen",
+  "hallinto_valitus",
+  "vakuutus_oikaisu",
+  "vuokra_reklamaatio",
+  "vahingonkorvaus",
+  "takaisinsaanti",
+  // Legacy types (mapped to templates)
   "invoice_denial",
   "court_response",
   "complaint",
