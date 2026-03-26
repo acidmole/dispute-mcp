@@ -20,28 +20,20 @@ async function getExtractor() {
 export async function embed(text: string): Promise<number[]> {
   const ext = await getExtractor();
   const output = await ext(`query: ${text}`, { pooling: "mean", normalize: true });
-  return Array.from(output.data as Float32Array);
+  return output.tolist()[0] as number[];
 }
 
 export async function embedBatch(texts: string[]): Promise<number[][]> {
-  const ext = await getExtractor();
   const allEmbeddings: number[][] = [];
 
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
     const batch = texts.slice(i, i + BATCH_SIZE);
     const prefixed = batch.map((t) => `passage: ${t}`);
 
+    const ext = await getExtractor();
     const output = await ext(prefixed, { pooling: "mean", normalize: true });
-
-    const data = output.data as Float32Array;
-    const dims = output.dims;
-    const embeddingDim = dims[dims.length - 1];
-
-    for (let j = 0; j < batch.length; j++) {
-      const start = j * embeddingDim;
-      const end = start + embeddingDim;
-      allEmbeddings.push(Array.from(data.slice(start, end)));
-    }
+    const batchEmbeddings = output.tolist() as number[][];
+    allEmbeddings.push(...batchEmbeddings);
   }
 
   return allEmbeddings;
