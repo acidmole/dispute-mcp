@@ -6,6 +6,25 @@ Toimii täysin paikallisesti ilman ulkoisia API-avaimia. Embedding-malli (multil
 
 > **TÄRKEÄ HUOMAUTUS**: Tämä työkalu ei ole oikeudellinen neuvo eikä korvaa juristia. Työkalu tuottaa automaattisesti generoituja asiakirjoja, jotka voivat sisältää virheitä tai puutteita. Tarkista aina oikeudelliset väitteet ja asiakirjat pätevän juristin kanssa ennen niiden käyttämistä. Tekijät eivät vastaa työkalun tuottamien asiakirjojen oikeellisuudesta tai niiden käytöstä aiheutuvista seurauksista.
 
+## Asiakirjatyypit
+
+Palvelin tukee 10 oikeudellista asiakirjatyyppiä, kukin oikeusperusteisella rakenteella:
+
+| Asiakirjatyyppi | ID | Oikeusperusta | Vastaanottaja |
+|----------------|-----|---------------|---------------|
+| Vastaus käräjäoikeudelle | `karajaoikeus_vastaus` | OK 5:10 | Käräjäoikeus |
+| Reklamaatio | `reklamaatio` | KSL 5:16 | Myyjä |
+| KRIL-hakemus | `kril_hakemus` | Laki KRIL:stä | Kuluttajariitalautakunta |
+| Laskun kiistäminen | `laskun_kiistaminen` | Perintälaki 4c § | Laskuttaja |
+| Perinnän kiistäminen | `perinnan_kiistaminen` | Perintälaki 4b-4c § | Perintätoimisto |
+| Hallintovalitus | `hallinto_valitus` | Hallintoprosessilaki 8 § | Hallinto-oikeus |
+| Vakuutusoikaisu | `vakuutus_oikaisu` | Vakuutussopimuslaki | Vakuutusyhtiö |
+| Vuokrareklamaatio | `vuokra_reklamaatio` | Huoneenvuokralaki | Vuokranantaja |
+| Vahingonkorvaus | `vahingonkorvaus` | Vahingonkorvauslaki | Vahingonaiheuttaja |
+| Takaisinsaantihakemus | `takaisinsaanti` | OK 12:15 | Käräjäoikeus |
+
+Jokaiselle asiakirjatyypille on määritelty pakolliset osiot, muodolliset vaatimukset, määräajat ja varoitukset.
+
 ## Oikeuslähteet
 
 Palvelin indeksoi viidestä julkisesta oikeuslähteestä ja hakee niistä semanttisella vektorihaulla:
@@ -71,16 +90,41 @@ Lisää `claude_desktop_config.json` -tiedostoon:
 claude mcp add dispute-mcp node /polku/dispute-mcp/build/index.js
 ```
 
-## MCP-työkalut
+## MCP-kapabiliteetit
 
-### `analyze_document`
+Palvelin tarjoaa kolme MCP-mekanismia:
+
+### Prompts (Claude Desktop)
+
+Asiakirjatyyppikohtaiset rakenneohjeistukset. Claude saa automaattisesti tiedon pakollisista osioista, muodollisista vaatimuksista, määräajoista ja ehdotetuista oikeuslähdehauista ennen asiakirjan laatimista. Valittavissa Claude Desktopin prompt-valikosta.
+
+### Resources (Claude Code + Desktop)
+
+Samat asiakirjarakenteet saatavilla myös resursseina URI-osoitteilla:
+
+```
+dispute://templates/karajaoikeus_vastaus
+dispute://templates/reklamaatio
+dispute://templates/kril_hakemus
+dispute://templates/laskun_kiistaminen
+dispute://templates/perinnan_kiistaminen
+dispute://templates/hallinto_valitus
+dispute://templates/vakuutus_oikaisu
+dispute://templates/vuokra_reklamaatio
+dispute://templates/vahingonkorvaus
+dispute://templates/takaisinsaanti
+```
+
+### Tools
+
+#### `analyze_document`
 
 Analysoi asiakirjan (lasku, haaste, sopimus) ja poimii rakenteelliset tiedot: osapuolet, vaatimukset, rahamäärät, päivämäärät, viitenumerot.
 
 - Tukee PDF, kuva (OCR/Tesseract), tekstitiedostot
 - Syöte: `file_path` tai `text` + `document_type`
 
-### `search_legal`
+#### `search_legal`
 
 Semanttinen haku oikeuslähteistä. Palauttaa relevantit lakitekstit, oikeustapaukset ja muut lähteet viittauksineen.
 
@@ -89,27 +133,30 @@ Semanttinen haku oikeuslähteistä. Palauttaa relevantit lakitekstit, oikeustapa
 - `legal_area`: Rajaa oikeudenalaan, esim. `kuluttajansuoja`, `sopimusoikeus`
 - `limit`: Tulosten enimmäismäärä (1-50)
 
-### `generate_dispute`
+#### `generate_dispute`
 
-Luo rakenteellisen riitakirjeen yhdistämällä dokumenttianalyysin, oikeusviittaukset ja käyttäjän argumentit.
+Luo rakenteellisen oikeudellisen asiakirjan yhdistämällä dokumenttianalyysin, oikeusviittaukset ja käyttäjän argumentit.
 
-- `dispute_type`: `invoice_denial`, `court_response`, `complaint`, `claim`, `objection`
-- Tuottaa strukturoidun markdownin suomeksi tai ruotsiksi
+- `dispute_type`: Mikä tahansa 10 asiakirjatyypistä (tai legacy-tyypeistä)
+- Tuottaa asiakirjatyypin mukaisen rakenteen pakollisine osioineen
 - Viittaukset ryhmiteltyinä: lainkohdat, oikeuskäytäntö (KKO/KHO), lain esityöt (HE), lautakuntaratkaisut (KRIL)
 
 ## Tyypillinen työnkulku
 
-1. **Analysoi** saatu asiakirja `analyze_document`-työkalulla
-2. **Hae** relevantteja oikeuslähteitä `search_legal`-työkalulla
-3. **Luo** riitakirje `generate_dispute`-työkalulla
+1. Claude valitsee asiakirjatyypin **promptista/resurssista** ja saa rakenneohjeistuksen
+2. **Analysoi** saatu asiakirja `analyze_document`-työkalulla
+3. **Hae** relevantteja oikeuslähteitä `search_legal`-työkalulla (promptin ehdottamilla hauilla)
+4. **Luo** asiakirja `generate_dispute`-työkalulla oikealla rakenteella
+5. Claude täydentää ja viimeistelee argumentit
 
 ## Arkkitehtuuri
 
 ```
 src/
-├── index.ts                    # MCP-palvelin (stdio)
+├── index.ts                    # MCP-palvelin (stdio, tools + prompts + resources)
 ├── types.ts                    # Tyypit ja lakidata
 ├── data/
+│   ├── document-templates.ts   # 10 asiakirjatyyppiä rakennetietoineen
 │   ├── finlex-fetcher.ts       # Säädösten haku Finlex API:sta
 │   ├── case-law-fetcher.ts     # KKO/KHO ennakkopäätösten haku
 │   ├── he-fetcher.ts           # Hallituksen esitysten haku
@@ -117,10 +164,11 @@ src/
 │   ├── indexer.ts              # LanceDB-indeksointi + embedding
 │   └── schemas.ts              # Zod-validointiskemat
 ├── services/
+│   ├── prompt-builder.ts       # Asiakirjatyypin rakenneohjeistus
 │   ├── embedding.ts            # Lokaali embedding (multilingual-e5-large)
 │   ├── legal-search.ts         # Vektorihaku LanceDB:stä
 │   ├── document-parser.ts      # PDF/kuva/teksti-parseri
-│   └── dispute-generator.ts    # Riitakirjeen generointi
+│   └── dispute-generator.ts    # Template-pohjainen asiakirjan generointi
 └── tools/
     ├── analyze-document.ts
     ├── search-legal.ts
@@ -130,7 +178,7 @@ src/
 ## Teknologiat
 
 - **TypeScript** + Node.js (ES2022)
-- **@modelcontextprotocol/sdk** - MCP-protokolla
+- **@modelcontextprotocol/sdk** - MCP-protokolla (tools, prompts, resources)
 - **LanceDB** - Embedded vektoritietokanta
 - **@huggingface/transformers** - Lokaali embedding (multilingual-e5-large, 1024 dim)
 - **fast-xml-parser** - Akoma Ntoso XML -parsinta
