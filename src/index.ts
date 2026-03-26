@@ -7,6 +7,8 @@ import {
   ListToolsRequestSchema,
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import {
   AnalyzeDocumentInputSchema,
@@ -28,6 +30,7 @@ const server = new Server(
     capabilities: {
       tools: {},
       prompts: {},
+      resources: {},
     },
   }
 );
@@ -69,6 +72,41 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
           type: "text" as const,
           text: prompt,
         },
+      },
+    ],
+  };
+});
+
+// --- Resources: document templates as structured data ---
+
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  return {
+    resources: DOCUMENT_TEMPLATES.map((t) => ({
+      uri: `dispute://templates/${t.id}`,
+      name: t.name,
+      description: `${t.description}. Oikeusperusta: ${t.legalBasis}`,
+      mimeType: "text/markdown",
+    })),
+  };
+});
+
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const uri = request.params.uri;
+  const templateId = uri.replace("dispute://templates/", "");
+  const template = DOCUMENT_TEMPLATES.find((t) => t.id === templateId);
+
+  if (!template) {
+    throw new Error(`Tuntematon template: ${templateId}`);
+  }
+
+  const content = buildDocumentPrompt(template, "");
+
+  return {
+    contents: [
+      {
+        uri,
+        mimeType: "text/markdown",
+        text: content,
       },
     ],
   };
