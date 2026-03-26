@@ -1,0 +1,31 @@
+# Build
+build/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+# Data (generated, large)
+data/
+
+# Environment & secrets
+.env
+.env.*
+*.pem
+*.key
+
+# IDE & tools
+.claude/
+thoughts/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model cache (downloaded by transformers.js)
+.cache/

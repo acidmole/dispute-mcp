@@ -1,0 +1,31 @@
+{
+  "name": "dispute-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for generating Finnish legal disputes with RAG over Finlex data",
+  "type": "module",
+  "bin": {
+    "dispute-mcp": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "index-finlex": "tsx scripts/index-finlex.ts",
+    "inspect": "npx @modelcontextprotocol/inspector node build/index.js"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "@lancedb/lancedb": "^0.15.0",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "apache-arrow": "^18.0.0",
+    "fast-xml-parser": "^4.5.0",
+    "pdf-parse": "^1.1.1",
+    "tesseract.js": "^5.1.1",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pdf-parse": "^1.1.4",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
