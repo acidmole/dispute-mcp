@@ -1,22 +1,22 @@
 # dispute-mcp
 
-MCP-palvelin suomalaisten oikeudellisten riitojen luomiseen. Auttaa kuluttajia riitauttamaan laskuja, vastaamaan käräjäoikeuden haasteisiin ja tekemään reklamaatioita suomalaisen lainsäädännön viittauksilla.
+MCP-palvelin suomalaisten oikeudellisten asiakirjojen laatimiseen. Auttaa kuluttajia riitauttamaan laskuja, vastaamaan käräjäoikeuden haasteisiin ja laatimaan reklamaatioita suomalaisen lainsäädännön viittauksilla.
 
-Toimii täysin paikallisesti ilman ulkoisia API-avaimia. Embedding-malli (multilingual-e5-large) ladataan ja ajetaan lokaalisti.
+Toimii täysin paikallisesti ilman ulkoisia API-avaimia. Upotusmalli (multilingual-e5-large) ladataan ja ajetaan paikallisesti.
 
-> **TÄRKEÄ HUOMAUTUS**: Tämä työkalu ei ole oikeudellinen neuvo eikä korvaa juristia. Työkalu tuottaa automaattisesti generoituja asiakirjoja, jotka voivat sisältää virheitä tai puutteita. Tarkista aina oikeudelliset väitteet ja asiakirjat pätevän juristin kanssa ennen niiden käyttämistä. Tekijät eivät vastaa työkalun tuottamien asiakirjojen oikeellisuudesta tai niiden käytöstä aiheutuvista seurauksista.
+> **TÄRKEÄ HUOMAUTUS**: Tämä työkalu ei ole oikeudellinen neuvo eikä korvaa juristia. Työkalu tuottaa automaattisesti generoituja asiakirjoja, jotka voivat sisältää virheitä tai puutteita. Tarkistuta oikeudelliset väitteet ja asiakirjat aina pätevällä juristilla ennen niiden käyttöä. Tekijät eivät vastaa työkalun tuottamien asiakirjojen oikeellisuudesta tai niiden käytöstä aiheutuvista seurauksista.
 
 ## Asiakirjatyypit
 
-Palvelin tukee 10 oikeudellista asiakirjatyyppiä, kukin oikeusperusteisella rakenteella:
+Palvelin tukee kymmentä oikeudellista asiakirjatyyppiä, kukin oman oikeusperusteensa mukaisella rakenteella:
 
 | Asiakirjatyyppi | ID | Oikeusperusta | Vastaanottaja |
-|----------------|-----|---------------|---------------|
+| --- | --- | --- | --- |
 | Vastaus käräjäoikeudelle | `karajaoikeus_vastaus` | OK 5:10 | Käräjäoikeus |
 | Reklamaatio | `reklamaatio` | KSL 5:16 | Myyjä |
 | KRIL-hakemus | `kril_hakemus` | Laki KRIL:stä | Kuluttajariitalautakunta |
 | Laskun kiistäminen | `laskun_kiistaminen` | Perintälaki 4c § | Laskuttaja |
-| Perinnän kiistäminen | `perinnan_kiistaminen` | Perintälaki 4b-4c § | Perintätoimisto |
+| Perinnän kiistäminen | `perinnan_kiistaminen` | Perintälaki 4b–4c § | Perintätoimisto |
 | Hallintovalitus | `hallinto_valitus` | Hallintoprosessilaki 8 § | Hallinto-oikeus |
 | Vakuutusoikaisu | `vakuutus_oikaisu` | Vakuutussopimuslaki | Vakuutusyhtiö |
 | Vuokrareklamaatio | `vuokra_reklamaatio` | Huoneenvuokralaki | Vuokranantaja |
@@ -30,7 +30,7 @@ Jokaiselle asiakirjatyypille on määritelty pakolliset osiot, muodolliset vaati
 Palvelin indeksoi viidestä julkisesta oikeuslähteestä ja hakee niistä semanttisella vektorihaulla:
 
 | Lähde | Tyyppi | Sisältö | Lähde |
-|-------|--------|---------|-------|
+| --- | --- | --- | --- |
 | **Ajantasainen lainsäädäntö** | `law` | 18 kuluttajaoikeuden keskeistä lakia (ajantasaiset konsolidoidut versiot) | [Finlex Open Data](https://opendata.finlex.fi) |
 | **KKO** | `kko_ruling` | Korkeimman oikeuden ennakkopäätökset | Finlex Open Data |
 | **KHO** | `kho_ruling` | Korkeimman hallinto-oikeuden päätökset | Finlex Open Data |
@@ -39,21 +39,21 @@ Palvelin indeksoi viidestä julkisesta oikeuslähteestä ja hakee niistä semant
 
 ## Asennus
 
-```bash
+```
 git clone https://github.com/acidmole/dispute-mcp.git
 cd dispute-mcp
 npm install
 npm run build
 ```
 
-Ei vaadi API-avaimia tai ympäristömuuttujia. Embedding-malli ladataan automaattisesti ensimmäisellä käyttökerralla (~1.3 GB).
+Ei vaadi API-avaimia tai ympäristömuuttujia. Upotusmalli ladataan automaattisesti ensimmäisellä käyttökerralla (~1,3 Gt).
 
 ## Tietokannan indeksointi
 
-Ennen käyttöä oikeuslähteet pitää indeksoida paikalliseen vektoritietokantaan:
+Ennen ensimmäistä käyttöä oikeuslähteet on indeksoitava paikalliseen vektoritietokantaan:
 
-```bash
-# Indeksoi kaikki lähteet (kestää ~2 tuntia)
+```
+# Indeksoi kaikki lähteet (kesto noin 2 tuntia)
 npm run index-finlex
 
 # Tai indeksoi yksittäinen lähde
@@ -71,7 +71,7 @@ npm run index-finlex -- --source=kko --start-year=2020 --end-year=2025
 
 ### Claude Desktop
 
-Lisää `claude_desktop_config.json` -tiedostoon:
+Lisää `claude_desktop_config.json`-tiedostoon:
 
 ```json
 {
@@ -86,21 +86,21 @@ Lisää `claude_desktop_config.json` -tiedostoon:
 
 ### Claude Code
 
-```bash
+```
 claude mcp add dispute-mcp node /polku/dispute-mcp/build/index.js
 ```
 
-## MCP-kapabiliteetit
+## MCP-toiminnot
 
 Palvelin tarjoaa kolme MCP-mekanismia:
 
-### Prompts (Claude Desktop)
+### Kehotteet (Claude Desktop)
 
-Asiakirjatyyppikohtaiset rakenneohjeistukset. Claude saa automaattisesti tiedon pakollisista osioista, muodollisista vaatimuksista, määräajoista ja ehdotetuista oikeuslähdehauista ennen asiakirjan laatimista. Valittavissa Claude Desktopin prompt-valikosta.
+Asiakirjatyyppikohtaiset rakenneohjeistukset. Claude saa automaattisesti tiedon pakollisista osioista, muodollisista vaatimuksista, määräajoista ja ehdotetuista oikeuslähdehauista ennen asiakirjan laatimista. Valittavissa Claude Desktopin kehotevalikosta.
 
-### Resources (Claude Code + Desktop)
+### Resurssit (Claude Code ja Desktop)
 
-Samat asiakirjarakenteet saatavilla myös resursseina URI-osoitteilla:
+Samat asiakirjarakenteet ovat saatavilla myös resursseina URI-osoitteilla:
 
 ```
 dispute://templates/karajaoikeus_vastaus
@@ -115,13 +115,13 @@ dispute://templates/vahingonkorvaus
 dispute://templates/takaisinsaanti
 ```
 
-### Tools
+### Työkalut
 
 #### `analyze_document`
 
-Analysoi asiakirjan (lasku, haaste, sopimus) ja poimii rakenteelliset tiedot: osapuolet, vaatimukset, rahamäärät, päivämäärät, viitenumerot.
+Analysoi asiakirjan (lasku, haaste, sopimus) ja poimii rakenteelliset tiedot: osapuolet, vaatimukset, rahamäärät, päivämäärät ja viitenumerot.
 
-- Tukee PDF, kuva (OCR/Tesseract), tekstitiedostot
+- Tukee PDF-, kuva- (OCR/Tesseract) ja tekstitiedostoja
 - Syöte: `file_path` tai `text` + `document_type`
 
 #### `search_legal`
@@ -131,21 +131,21 @@ Semanttinen haku oikeuslähteistä. Palauttaa relevantit lakitekstit, oikeustapa
 - `query`: Hakukysely suomeksi
 - `source_type`: `law`, `kko_ruling`, `kho_ruling`, `he_document`, `consumer_board`, `all`
 - `legal_area`: Rajaa oikeudenalaan, esim. `kuluttajansuoja`, `sopimusoikeus`
-- `limit`: Tulosten enimmäismäärä (1-50)
+- `limit`: Tulosten enimmäismäärä (1–50)
 
 #### `generate_dispute`
 
 Luo rakenteellisen oikeudellisen asiakirjan yhdistämällä dokumenttianalyysin, oikeusviittaukset ja käyttäjän argumentit.
 
-- `dispute_type`: Mikä tahansa 10 asiakirjatyypistä (tai legacy-tyypeistä)
+- `dispute_type`: Mikä tahansa kymmenestä asiakirjatyypistä (tai vanhoista tyypeistä)
 - Tuottaa asiakirjatyypin mukaisen rakenteen pakollisine osioineen
-- Viittaukset ryhmiteltyinä: lainkohdat, oikeuskäytäntö (KKO/KHO), lain esityöt (HE), lautakuntaratkaisut (KRIL)
+- Viittaukset ryhmiteltyinä: lainkohdat, oikeuskäytäntö (KKO/KHO), lain esityöt (HE) ja lautakuntaratkaisut (KRIL)
 
 ## Tyypillinen työnkulku
 
-1. Claude valitsee asiakirjatyypin **promptista/resurssista** ja saa rakenneohjeistuksen
+1. Claude valitsee asiakirjatyypin **kehotteesta tai resurssista** ja saa rakenneohjeistuksen
 2. **Analysoi** saatu asiakirja `analyze_document`-työkalulla
-3. **Hae** relevantteja oikeuslähteitä `search_legal`-työkalulla (promptin ehdottamilla hauilla)
+3. **Hae** relevantteja oikeuslähteitä `search_legal`-työkalulla (kehote ehdottaa sopivia hakuja)
 4. **Luo** asiakirja `generate_dispute`-työkalulla oikealla rakenteella
 5. Claude täydentää ja viimeistelee argumentit
 
@@ -157,18 +157,18 @@ src/
 ├── types.ts                    # Tyypit ja lakidata
 ├── data/
 │   ├── document-templates.ts   # 10 asiakirjatyyppiä rakennetietoineen
-│   ├── finlex-fetcher.ts       # Säädösten haku Finlex API:sta
+│   ├── finlex-fetcher.ts       # Säädösten haku Finlex-rajapinnasta
 │   ├── case-law-fetcher.ts     # KKO/KHO ennakkopäätösten haku
 │   ├── he-fetcher.ts           # Hallituksen esitysten haku
-│   ├── kril-scraper.ts         # KRIL-ratkaisujen scraper
-│   ├── indexer.ts              # LanceDB-indeksointi + embedding
+│   ├── kril-scraper.ts         # KRIL-ratkaisujen haku
+│   ├── indexer.ts              # LanceDB-indeksointi ja upotus
 │   └── schemas.ts              # Zod-validointiskemat
 ├── services/
 │   ├── prompt-builder.ts       # Asiakirjatyypin rakenneohjeistus
-│   ├── embedding.ts            # Lokaali embedding (multilingual-e5-large)
+│   ├── embedding.ts            # Paikallinen upotus (multilingual-e5-large)
 │   ├── legal-search.ts         # Vektorihaku LanceDB:stä
-│   ├── document-parser.ts      # PDF/kuva/teksti-parseri
-│   └── dispute-generator.ts    # Template-pohjainen asiakirjan generointi
+│   ├── document-parser.ts      # PDF-, kuva- ja tekstiparseri
+│   └── dispute-generator.ts    # Mallipohjainen asiakirjan generointi
 └── tools/
     ├── analyze-document.ts
     ├── search-legal.ts
@@ -178,17 +178,17 @@ src/
 ## Teknologiat
 
 - **TypeScript** + Node.js (ES2022)
-- **@modelcontextprotocol/sdk** - MCP-protokolla (tools, prompts, resources)
-- **LanceDB** - Embedded vektoritietokanta
-- **@huggingface/transformers** - Lokaali embedding (multilingual-e5-large, 1024 dim)
-- **fast-xml-parser** - Akoma Ntoso XML -parsinta
-- **pdf-parse** + **tesseract.js** - PDF ja OCR
+- **@modelcontextprotocol/sdk** – MCP-protokolla (tools, prompts, resources)
+- **LanceDB** – Upotettu vektoritietokanta
+- **@huggingface/transformers** – Paikallinen upotus (multilingual-e5-large, 1024 dim)
+- **fast-xml-parser** – Akoma Ntoso XML -jäsennys
+- **pdf-parse** + **tesseract.js** – PDF ja OCR
 
 ## Tietolähteet
 
-### Finlex Open Data API
+### Finlex Open Data -rajapinta
 
-Ajantasainen lainsäädäntö, oikeuskäytäntö ja hallituksen esitykset haetaan [Finlex Open Data API:sta](https://opendata.finlex.fi) Akoma Ntoso XML -muodossa. Säädökset haetaan konsolidoituina ajantasaisina versioina, jotka sisältävät kaikki voimassa olevat muutokset. Lisenssi: CC BY 4.0 (ajantasainen lainsäädäntö CC BY-NC 4.0).
+Ajantasainen lainsäädäntö, oikeuskäytäntö ja hallituksen esitykset haetaan [Finlex Open Data -rajapinnasta](https://opendata.finlex.fi) Akoma Ntoso XML -muodossa. Säädökset haetaan konsolidoituina ajantasaisina versioina, jotka sisältävät kaikki voimassa olevat muutokset. Lisenssi: CC BY 4.0 (ajantasainen lainsäädäntö CC BY-NC 4.0).
 
 Indeksoidut lait:
 
@@ -213,11 +213,11 @@ Indeksoidut lait:
 
 ### Kuluttajariitalautakunta
 
-KRIL-ratkaisut haetaan [kuluttajariita.fi](https://www.kuluttajariita.fi/paatokset/) -sivustolta. Julkista viranomaisdataa.
+KRIL-ratkaisut haetaan [kuluttajariita.fi](https://www.kuluttajariita.fi/paatokset/)-sivustolta. Julkista viranomaisdataa.
 
 ## Vastuuvapauslauseke
 
-**Tämä työkalu EI ole oikeudellinen palvelu.** Se on tekninen apuväline, joka hakee julkisia oikeuslähteitä ja tuottaa asiakirjapohjia. Työkalun tuottamat asiakirjat:
+**Tämä työkalu EI ole oikeudellinen palvelu.** Se on tekninen apuväline, joka hakee tietoja julkisista oikeuslähteistä ja tuottaa asiakirjapohjia. Työkalun tuottamat asiakirjat:
 
 - Voivat sisältää virheellisiä tai vanhentuneita lakiviittauksia
 - Eivät huomioi tapauskohtaisia erityispiirteitä
@@ -228,7 +228,7 @@ Tekijät eivät vastaa työkalun käytöstä aiheutuvista vahingoista.
 
 ## Kiitokset
 
-MCP-työkalut kehitetty [@hoblin](https://github.com/hoblin):n MCP-tooling-ratkaisujen pohjalta.
+MCP-työkalut on kehitetty [@hoblin](https://github.com/hoblin):n MCP-toteutusten pohjalta.
 
 ## Lisenssi
 
