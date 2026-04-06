@@ -1,5 +1,6 @@
 import type { DocumentAnalysis, LegalSearchResult, DisputeType, Language } from "../types.js";
 import { findTemplate, type LegalDocumentTemplate } from "../data/document-templates.js";
+import { haeVakiot } from "../data/elatusapu-constants.js";
 
 interface DisputeInput {
   disputeType: DisputeType;
@@ -270,6 +271,145 @@ function getSectionContent(sectionId: string, input: DisputeInput, template: Leg
     case "liitteet":
     case "liiteluettelo":
       return "*[Luettelo liitteistä]*";
+
+    // --- Elatusapu (child support) sections ---
+
+    case "lapsen_tiedot":
+      return [
+        "**Lapsen nimi:** ____________________",
+        "**Syntymäaika:** ____________________",
+        "**Henkilötunnus:** ____________________",
+        "**Ikäryhmä:** ☐ 0–6 v. ☐ 7–12 v. ☐ 13–17 v.",
+      ].join("\n");
+
+    case "lapsen_kulut": {
+      const v = haeVakiot();
+      return [
+        `**Lapsen peruskulutus (OM 2007:2 ohje, ${v.vuosi}):**`,
+        `- 0–6-vuotiaat: ${v.peruskulutus["0-6"]} €/kk`,
+        `- 7–12-vuotiaat: ${v.peruskulutus["7-12"]} €/kk`,
+        `- 13–17-vuotiaat: ${v.peruskulutus["13-17"]} €/kk`,
+        "",
+        "**Erityiskustannukset:**",
+        "- Päivähoito/koulu: ________ €/kk",
+        "- Terveydenhuolto: ________ €/kk",
+        "- Harrastukset: ________ €/kk",
+        "- Vakuutukset: ________ €/kk",
+        "",
+        "**Lapsen elatuksen tarve yhteensä:** ________ €/kk",
+      ].join("\n");
+    }
+
+    case "asumiskustannukset": {
+      const v = haeVakiot();
+      return [
+        "**Lähivanhemman asumiskustannukset:** ________ €/kk",
+        "",
+        `**Lapsen osuus asumiskustannuksista (OM 2007:2 ohje, ${v.vuosi}):**`,
+        "Yksinhuolto:",
+        ...Object.entries(v.asumisprosentitYksinhuolto).map(([n, p]) => `- ${n} lasta: ${p} %`),
+        "",
+        "Vuoroasuminen:",
+        ...Object.entries(v.asumisprosentitVuoroasuminen).map(([n, p]) => `- ${n} lasta: ${p} %`),
+        "",
+        "**Lapsen asumiskustannus:** ________ €/kk",
+      ].join("\n");
+    }
+
+    case "elatuskyky":
+      return [
+        "**Elatusvelvollisen elatuskyky:**",
+        "- Tulot yhteensä: ________ €/kk",
+        "- Yleinen elinkustannus: ________ €/kk",
+        "- Asumiskustannukset (netto): ________ €/kk",
+        "- Erityiset terveydenhoitokulut: ________ €/kk",
+        "- Työmatkakustannukset: ________ €/kk",
+        "- Muut elatusvelvollisuudet: ________ €/kk",
+        "- **Elatuskyky:** ________ €/kk",
+        "",
+        "**Lähivanhemman elatuskyky:**",
+        "- Tulot yhteensä: ________ €/kk",
+        "- (samat vähennyserät)",
+        "- **Elatuskyky:** ________ €/kk",
+      ].join("\n");
+
+    case "vuoroasuminen":
+      return [
+        "**Vuoroasuminen:**",
+        "- Lapsi asuu vanhemman A luona: ________ yötä/kk",
+        "- Lapsi asuu vanhemman B luona: ________ yötä/kk",
+        "",
+        "Vuoroasumiseksi katsotaan ≥ 40 % ajasta molempien luona.",
+        "Vuoroasumisessa käytetään alennettuja asumisprosentteja.",
+      ].join("\n");
+
+    case "luonapitovahennys": {
+      const v = haeVakiot();
+      const nightRanges = Object.keys(v.luonapitovahennys["0-6"]);
+      return [
+        `**Luonapitovähennys (${v.vuosi}):**`,
+        "",
+        "| Yöt/kk | 0–6 v. | 7–12 v. | 13–17 v. |",
+        "|--------|--------|---------|----------|",
+        ...nightRanges.map((yot) =>
+          `| ${yot} | ${v.luonapitovahennys["0-6"][yot]} € | ${v.luonapitovahennys["7-12"][yot]} € | ${v.luonapitovahennys["13-17"][yot]} € |`
+        ),
+        "",
+        "**Sovellettava vähennys:** ________ €/kk",
+      ].join("\n");
+    }
+
+    case "elatusapulaskelma": {
+      const v = haeVakiot();
+      return [
+        "**Elatusapulaskelma:**",
+        "",
+        "1. Lapsen elatuksen tarve: ________ €/kk",
+        "2. Vähennettynä lähivanhemman osuus: ________ €/kk",
+        "3. Elatusvelvollisen osuus (elatuskykyjen suhteessa): ________ €/kk",
+        "4. Luonapitovähennys: ________ €/kk",
+        "5. **Elatusapu yhteensä: ________ €/kk**",
+        "",
+        `Kelan elatustuki (vähimmäistaso ${v.vuosi}): ${v.kelaElatustuki} €/kk`,
+        `Indeksikerroin ${v.vuosi}: ${v.indeksikerroin.osoittaja}/${v.indeksikerroin.nimittaja}`,
+      ].join("\n");
+    }
+
+    case "muutoksen_peruste":
+      return [
+        "**Olosuhteiden muutos:**",
+        "- Alkuperäinen elatusapu: ________ €/kk",
+        "- Muutoksen syy: ____________________",
+        "- Muutoksen ajankohta: ____________________",
+        "",
+        "**Uusi laskelma osoittaa ≥ 15 % muutoksen:**",
+        "- Uusi elatusapu: ________ €/kk",
+        "- Muutos: ________ € (________ %)",
+        "",
+        "Muutos ei ole tilapäinen ja perustelee sopimuksen tarkistamista.",
+      ].join("\n");
+
+    case "alkuperainen_sopimus":
+      return [
+        "**Alkuperäinen sopimus/tuomio:**",
+        "- Päivämäärä: ____________________",
+        "- Vahvistaja: ☐ Lastenvalvoja ☐ Käräjäoikeus",
+        "- Elatusavun määrä: ________ €/kk",
+        "- Viite/diaarinumero: ____________________",
+      ].join("\n");
+
+    case "maksamattomuus": {
+      const v = haeVakiot();
+      return [
+        "**Elatusavun maksamattomuus:**",
+        "- Elatusvelvollinen: ____________________",
+        "- Maksamattomat kuukaudet: ____________________",
+        "- Maksamaton summa yhteensä: ________ €",
+        "- Perintätoimet: ____________________",
+        "",
+        `Kelan elatustuki ${v.vuosi}: ${v.kelaElatustuki} €/kk per lapsi`,
+      ].join("\n");
+    }
 
     default:
       return null;

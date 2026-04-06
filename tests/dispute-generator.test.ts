@@ -160,6 +160,51 @@ describe("generateDispute", () => {
   });
 });
 
+describe("generateDispute elatusapu", () => {
+  it("generates elatusapu_sopimus with calculation sections", () => {
+    const result = generateDispute({
+      disputeType: "elatusapu_sopimus",
+      documentAnalysis: mockAnalysis,
+      legalReferences: mockRefs,
+      userArguments: "Sovimme elatusavuksi 350 euroa kuukaudessa.",
+      respondent: "Lastenvalvoja, Helsinki",
+      language: "fi",
+    });
+
+    expect(result).toContain("ELATUSSOPIMUS");
+    expect(result).toContain("362.23"); // peruskulutus 0-6v
+    expect(result).toContain("Elatuskyky");
+  });
+
+  it("generates elatusapu_muutos with modification basis", () => {
+    const result = generateDispute({
+      disputeType: "elatusapu_muutos",
+      documentAnalysis: mockAnalysis,
+      legalReferences: [],
+      userArguments: "Tuloni ovat laskeneet 30% työttömyyden vuoksi.",
+      respondent: "Lastenvalvoja",
+      language: "fi",
+    });
+
+    expect(result).toContain("ELATUSAVUN MUUTOSHAKEMUS");
+    expect(result).toContain("15 %");
+  });
+
+  it("generates elatustuki_hakemus with Kela amount", () => {
+    const result = generateDispute({
+      disputeType: "elatustuki_hakemus",
+      documentAnalysis: mockAnalysis,
+      legalReferences: [],
+      userArguments: "Elatusvelvollinen ei ole maksanut elatusapua 6 kuukauteen.",
+      respondent: "Kela",
+      language: "fi",
+    });
+
+    expect(result).toContain("ELATUSTUKIHAKEMUS");
+    expect(result).toContain("197.71");
+  });
+});
+
 describe("generateDispute edge cases", () => {
   it("handles empty legal references", () => {
     const result = generateDispute({

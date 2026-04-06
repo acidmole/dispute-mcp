@@ -1,6 +1,6 @@
 # dispute-mcp
 
-MCP-palvelin suomalaisten oikeudellisten riitojen luomiseen. Auttaa kuluttajia riitauttamaan laskuja, vastaamaan käräjäoikeuden haasteisiin ja tekemään reklamaatioita suomalaisen lainsäädännön viittauksilla.
+MCP-palvelin suomalaisten oikeudellisten riitojen luomiseen. Auttaa kuluttajia riitauttamaan laskuja, vastaamaan käräjäoikeuden haasteisiin ja tekemään reklamaatioita suomalaisen lainsäädännön viittauksilla. Tukee myös elatusapuasioita (elatussopimus, elatusapuhakemus, muutoshakemus ja Kela-elatustukihakemus).
 
 Toimii täysin paikallisesti ilman ulkoisia API-avaimia. Embedding-malli (multilingual-e5-large) ladataan ja ajetaan lokaalisti.
 
@@ -8,7 +8,7 @@ Toimii täysin paikallisesti ilman ulkoisia API-avaimia. Embedding-malli (multil
 
 ## Asiakirjatyypit
 
-Palvelin tukee 10 oikeudellista asiakirjatyyppiä, kukin oikeusperusteisella rakenteella:
+Palvelin tukee 14 oikeudellista asiakirjatyyppiä, kukin oikeusperusteisella rakenteella:
 
 | Asiakirjatyyppi | ID | Oikeusperusta | Vastaanottaja |
 |----------------|-----|---------------|---------------|
@@ -22,6 +22,10 @@ Palvelin tukee 10 oikeudellista asiakirjatyyppiä, kukin oikeusperusteisella rak
 | Vuokrareklamaatio | `vuokra_reklamaatio` | Huoneenvuokralaki | Vuokranantaja |
 | Vahingonkorvaus | `vahingonkorvaus` | Vahingonkorvauslaki | Vahingonaiheuttaja |
 | Takaisinsaantihakemus | `takaisinsaanti` | OK 12:15 | Käräjäoikeus |
+| Elatussopimus | `elatusapu_sopimus` | Laki lapsen elatuksesta 7 § | Lastenvalvoja |
+| Elatusapuhakemus | `elatusapu_hakemus` | Laki lapsen elatuksesta 8-11 § | Käräjäoikeus |
+| Elatusavun muutoshakemus | `elatusapu_muutos` | Laki lapsen elatuksesta 11 § | Lastenvalvoja / käräjäoikeus |
+| Elatustukihakemus (Kela) | `elatustuki_hakemus` | Elatustukilaki (580/2008) | Kela |
 
 Jokaiselle asiakirjatyypille on määritelty pakolliset osiot, muodolliset vaatimukset, määräajat ja varoitukset.
 
@@ -31,7 +35,7 @@ Palvelin indeksoi viidestä julkisesta oikeuslähteestä ja hakee niistä semant
 
 | Lähde | Tyyppi | Sisältö | Lähde |
 |-------|--------|---------|-------|
-| **Ajantasainen lainsäädäntö** | `law` | 18 kuluttajaoikeuden keskeistä lakia (ajantasaiset konsolidoidut versiot) | [Finlex Open Data](https://opendata.finlex.fi) |
+| **Ajantasainen lainsäädäntö** | `law` | 24 keskeistä lakia: kuluttajaoikeus + perheoikeus (ajantasaiset konsolidoidut versiot) | [Finlex Open Data](https://opendata.finlex.fi) |
 | **KKO** | `kko_ruling` | Korkeimman oikeuden ennakkopäätökset | Finlex Open Data |
 | **KHO** | `kho_ruling` | Korkeimman hallinto-oikeuden päätökset | Finlex Open Data |
 | **HE** | `he_document` | Hallituksen esitykset (lain esityöt) | Finlex Open Data |
@@ -113,6 +117,10 @@ dispute://templates/vakuutus_oikaisu
 dispute://templates/vuokra_reklamaatio
 dispute://templates/vahingonkorvaus
 dispute://templates/takaisinsaanti
+dispute://templates/elatusapu_sopimus
+dispute://templates/elatusapu_hakemus
+dispute://templates/elatusapu_muutos
+dispute://templates/elatustuki_hakemus
 ```
 
 ### Tools
@@ -137,7 +145,7 @@ Semanttinen haku oikeuslähteistä. Palauttaa relevantit lakitekstit, oikeustapa
 
 Luo rakenteellisen oikeudellisen asiakirjan yhdistämällä dokumenttianalyysin, oikeusviittaukset ja käyttäjän argumentit.
 
-- `dispute_type`: Mikä tahansa 10 asiakirjatyypistä (tai legacy-tyypeistä)
+- `dispute_type`: Mikä tahansa 14 asiakirjatyypistä (tai legacy-tyypeistä)
 - Tuottaa asiakirjatyypin mukaisen rakenteen pakollisine osioineen
 - Viittaukset ryhmiteltyinä: lainkohdat, oikeuskäytäntö (KKO/KHO), lain esityöt (HE), lautakuntaratkaisut (KRIL)
 
@@ -156,7 +164,8 @@ src/
 ├── index.ts                    # MCP-palvelin (stdio, tools + prompts + resources)
 ├── types.ts                    # Tyypit ja lakidata
 ├── data/
-│   ├── document-templates.ts   # 10 asiakirjatyyppiä rakennetietoineen
+│   ├── document-templates.ts   # 14 asiakirjatyyppiä rakennetietoineen
+│   ├── elatusapu-constants.ts  # Elatusapuvakiot (OM 2007:2, STM indeksitarkistukset)
 │   ├── finlex-fetcher.ts       # Säädösten haku Finlex API:sta
 │   ├── case-law-fetcher.ts     # KKO/KHO ennakkopäätösten haku
 │   ├── he-fetcher.ts           # Hallituksen esitysten haku
@@ -210,6 +219,23 @@ Indeksoidut lait:
 - Kuluttajaturvallisuuslaki (100/2010)
 - Laki velan vanhentumisesta (1118/1996)
 - Tietosuojalaki (228/2004)
+
+**Perheoikeus:**
+
+- Laki lapsen elatuksesta (704/1975)
+- Elatustukilaki (580/2008)
+- Avioliittolaki (234/1929)
+- Isyyslaki (11/2015)
+- Äitiyslaki (253/2018)
+- Laki lapsen huollosta ja tapaamisoikeudesta (361/1983)
+
+### Elatusapuohjeistukset
+
+Elatusaputoiminnallisuus perustuu seuraaviin virallisiin ohjeisiin:
+
+- **OM 2007:2** "Ohje lapsen elatusavun suuruuden arvioimiseksi" — peruslaskentaohje
+- **OM 2023** "Elatusapu vuoroasumistilanteessa" — vuoroasumisen erityissäännöt
+- **STM** "Elatusapujen määrät" — vuosittaiset indeksitarkistukset (2026: kerroin 2338/2343)
 
 ### Kuluttajariitalautakunta
 

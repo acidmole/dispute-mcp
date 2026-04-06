@@ -23,6 +23,11 @@ export const DisputeTypeSchema = z.enum([
   "vuokra_reklamaatio",
   "vahingonkorvaus",
   "takaisinsaanti",
+  // Child support types
+  "elatusapu_sopimus",
+  "elatusapu_hakemus",
+  "elatusapu_muutos",
+  "elatustuki_hakemus",
   // Legacy types (mapped to templates)
   "invoice_denial",
   "court_response",
@@ -120,4 +125,11 @@ export const CONSUMER_LAWS: StatuteInfo[] = [
   { year: 2010, number: 100, name: "Kuluttajaturvallisuuslaki", legalArea: "kuluttajansuoja" },
   { year: 1996, number: 1118, name: "Vanhentumislaki (saatavan vanhentuminen)", legalArea: "velvoiteoikeus" },
   { year: 2004, number: 228, name: "Tietosuojalaki", legalArea: "tietosuoja" },
+  // Family law (perheoikeus)
+  { year: 1975, number: 704, name: "Laki lapsen elatuksesta", legalArea: "perheoikeus" },
+  { year: 2008, number: 580, name: "Elatustukilaki", legalArea: "perheoikeus" },
+  { year: 1929, number: 234, name: "Avioliittolaki", legalArea: "perheoikeus" },
+  { year: 2015, number: 11, name: "Isyyslaki", legalArea: "perheoikeus" },
+  { year: 2018, number: 253, name: "Äitiyslaki", legalArea: "perheoikeus" },
+  { year: 1983, number: 361, name: "Laki lapsen huollosta ja tapaamisoikeudesta", legalArea: "perheoikeus" },
 ];

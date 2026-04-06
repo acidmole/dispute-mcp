@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { DOCUMENT_TEMPLATES, findTemplate, LEGACY_TYPE_MAP } from "../src/data/document-templates.js";
 
 describe("Document Templates", () => {
-  it("contains 10 templates", () => {
-    expect(DOCUMENT_TEMPLATES).toHaveLength(10);
+  it("contains 14 templates", () => {
+    expect(DOCUMENT_TEMPLATES).toHaveLength(14);
   });
 
   it("each template has required fields", () => {
@@ -75,6 +75,41 @@ describe("Document Templates", () => {
     const t = findTemplate("takaisinsaanti");
     expect(t).toBeDefined();
     expect(t!.deadline!.days).toBe(30);
+  });
+
+  it("elatusapu_sopimus has required calculation sections", () => {
+    const t = findTemplate("elatusapu_sopimus");
+    expect(t).toBeDefined();
+    expect(t!.targetInstitution).toContain("Lastenvalvoja");
+    const requiredIds = t!.sections.filter((s) => s.required).map((s) => s.id);
+    expect(requiredIds).toContain("lapsen_tiedot");
+    expect(requiredIds).toContain("elatuskyky");
+    expect(requiredIds).toContain("elatusapulaskelma");
+    expect(requiredIds).toContain("lapsen_kulut");
+  });
+
+  it("elatusapu_hakemus targets käräjäoikeus", () => {
+    const t = findTemplate("elatusapu_hakemus");
+    expect(t).toBeDefined();
+    expect(t!.targetInstitution).toBe("Käräjäoikeus");
+    expect(t!.legalBasis).toContain("704/1975");
+  });
+
+  it("elatusapu_muutos has modification-specific required sections", () => {
+    const t = findTemplate("elatusapu_muutos");
+    expect(t).toBeDefined();
+    const requiredIds = t!.sections.filter((s) => s.required).map((s) => s.id);
+    expect(requiredIds).toContain("alkuperainen_sopimus");
+    expect(requiredIds).toContain("muutoksen_peruste");
+  });
+
+  it("elatustuki_hakemus targets Kela with elatustukilaki basis", () => {
+    const t = findTemplate("elatustuki_hakemus");
+    expect(t).toBeDefined();
+    expect(t!.targetInstitution).toBe("Kela");
+    expect(t!.legalBasis).toContain("580/2008");
+    const requiredIds = t!.sections.filter((s) => s.required).map((s) => s.id);
+    expect(requiredIds).toContain("maksamattomuus");
   });
 });
 
