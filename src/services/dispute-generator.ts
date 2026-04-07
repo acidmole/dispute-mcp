@@ -11,6 +11,50 @@ interface DisputeInput {
   language: Language;
 }
 
+// Minimum relevance score for legal references to be included in generated documents.
+// References below this threshold are filtered out to prevent inaccurate citations.
+const MIN_RELEVANCE_SCORE = 0.3;
+
+// Valid source types that can appear in the vector database
+const VALID_SOURCE_TYPES = new Set(["law", "kko_ruling", "kho_ruling", "he_document", "consumer_board"]);
+
+/**
+ * Validate and filter legal references before including them in documents.
+ * Removes references that:
+ * - Have relevance scores below the threshold (likely false positives)
+ * - Have empty or missing citations
+ * - Have invalid source types (not from the legal database)
+ */
+function validateLegalReferences(refs: LegalSearchResult[]): {
+  valid: LegalSearchResult[];
+  rejected: string[];
+} {
+  const valid: LegalSearchResult[] = [];
+  const rejected: string[] = [];
+
+  for (const ref of refs) {
+    if (!ref.citation || ref.citation.trim().length === 0) {
+      rejected.push("Hylätty: tyhjä viittaus");
+      continue;
+    }
+    if (!ref.text || ref.text.trim().length === 0) {
+      rejected.push(`Hylätty: ${ref.citation} — tyhjä teksti`);
+      continue;
+    }
+    if (!VALID_SOURCE_TYPES.has(ref.sourceType)) {
+      rejected.push(`Hylätty: ${ref.citation} — tuntematon lähdetyyppi '${ref.sourceType}'`);
+      continue;
+    }
+    if (ref.relevanceScore < MIN_RELEVANCE_SCORE) {
+      rejected.push(`Hylätty: ${ref.citation} — liian alhainen relevanssi (${ref.relevanceScore.toFixed(2)} < ${MIN_RELEVANCE_SCORE})`);
+      continue;
+    }
+    valid.push(ref);
+  }
+
+  return { valid, rejected };
+}
+
 function formatDate(lang: Language): string {
   const now = new Date();
   if (lang === "fi") {
@@ -88,6 +132,10 @@ function generateFromTemplate(input: DisputeInput, template: LegalDocumentTempla
   const lang = language;
   const lines: string[] = [];
 
+  // Validate legal references before using them in the document.
+  // Only verified references from the legal database are included.
+  const { valid: verifiedReferences, rejected } = validateLegalReferences(legalReferences);
+
   // Header
   lines.push(`# ${template.name.toUpperCase()}`);
   lines.push("");
@@ -125,11 +173,23 @@ function generateFromTemplate(input: DisputeInput, template: LegalDocumentTempla
     lines.push("");
   }
 
-  // Legal references
-  if (legalReferences.length > 0) {
+  // Legal references (only verified ones)
+  if (verifiedReferences.length > 0) {
     lines.push(`## ${lang === "fi" ? "Oikeudelliset perusteet" : "Rättsliga grunder"}`);
     lines.push("");
-    lines.push(renderLegalReferences(legalReferences, lang));
+    lines.push(renderLegalReferences(verifiedReferences, lang));
+  }
+
+  // Report rejected references for transparency
+  if (rejected.length > 0) {
+    lines.push("---");
+    lines.push("");
+    lines.push(`> **${lang === "fi" ? "Hylätyt lakiviittaukset" : "Avvisade rättsliga referenser"}:**`);
+    for (const r of rejected) {
+      lines.push(`> - ${r}`);
+    }
+    lines.push(`> *${lang === "fi" ? "Nämä viittaukset on hylätty automaattisesti, koska niitä ei voitu varmistaa oikeuslähdetietokannasta. Hae uudelleen search_legal-työkalulla." : "Dessa referenser har avvisats automatiskt eftersom de inte kunde verifieras."}*`);
+    lines.push("");
   }
 
   // Template warnings
@@ -142,14 +202,26 @@ function generateFromTemplate(input: DisputeInput, template: LegalDocumentTempla
     }
   }
 
-  // Disclaimer
+  // Legality and verification disclaimer
   lines.push("---");
   lines.push("");
-  lines.push(
-    lang === "fi"
-      ? `*Tämä ${template.name.toLowerCase()} on luotu automaattisesti dispute-mcp-työkalulla. Se ei ole oikeudellinen neuvo. Tarkista aina asiakirja pätevän juristin kanssa ennen käyttöä.*`
-      : "*Detta dokument har skapats automatiskt med dispute-mcp-verktyget. Det utgör inte juridisk rådgivning. Kontrollera alltid dokumentet med en kvalificerad jurist.*"
-  );
+  if (lang === "fi") {
+    lines.push("> **TÄRKEÄ HUOMAUTUS — LAINMUKAISUUS JA VERIFIOINTI**");
+    lines.push(">");
+    lines.push("> Tätä asiakirjaa ei saa käyttää lainvastaisiin tai rikollisiin tarkoituksiin. Asiakirja ei saa sisältää perättömiä väitteitä, valheellisia todisteita tai vilpillisiä vaatimuksia. Perättömien tietojen esittäminen viranomaiselle voi täyttää rikoslain (RL 16:8, 33:1, 36:1) mukaisten rikosten tunnusmerkistön.");
+    lines.push(">");
+    lines.push("> Kaikki tämän asiakirjan lakiviittaukset on tarkistettava Finlexistä (https://www.finlex.fi) ennen käyttöä. Asiakirja perustuu vektorihakuun oikeuslähdetietokannasta — viittaukset voivat olla puutteellisia, vanhentuneita tai virheellisiä. Vain pätevä juristi voi varmistaa viittausten oikeellisuuden ja sovellettavuuden tapaukseesi.");
+    lines.push(">");
+    lines.push(`> *Tämä ${template.name.toLowerCase()} on luotu automaattisesti dispute-mcp-työkalulla. Se ei ole oikeudellinen neuvo. Tarkista aina asiakirja pätevän juristin kanssa ennen käyttöä.*`);
+  } else {
+    lines.push("> **VIKTIG ANMÄRKNING — LAGLIGHET OCH VERIFIERING**");
+    lines.push(">");
+    lines.push("> Detta dokument får inte användas för olagliga eller brottsliga ändamål. Dokumentet får inte innehålla osanna påståenden, falska bevis eller bedrägliga krav.");
+    lines.push(">");
+    lines.push("> Alla rättsliga referenser i detta dokument måste verifieras mot Finlex (https://www.finlex.fi) före användning.");
+    lines.push(">");
+    lines.push("> *Detta dokument har skapats automatiskt med dispute-mcp-verktyget. Det utgör inte juridisk rådgivning. Kontrollera alltid dokumentet med en kvalificerad jurist.*");
+  }
 
   return lines.join("\n");
 }

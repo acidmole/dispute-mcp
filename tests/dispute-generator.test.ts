@@ -160,6 +160,98 @@ describe("generateDispute", () => {
   });
 });
 
+describe("generateDispute legal reference verification", () => {
+  it("filters out references with low relevance score", () => {
+    const lowRelevanceRef: LegalSearchResult = {
+      citation: "Kuluttajansuojalaki 99 luku 999 §",
+      text: "Vain heikosti liittyvä teksti",
+      sourceType: "law",
+      relevanceScore: 0.1, // Below 0.3 threshold
+    };
+    const result = generateDispute({
+      disputeType: "reklamaatio",
+      documentAnalysis: mockAnalysis,
+      legalReferences: [lowRelevanceRef],
+      userArguments: "Tuote viallinen.",
+      respondent: "Kauppa",
+      language: "fi",
+    });
+
+    // The rejected reference should NOT appear in the legal grounds section
+    expect(result).not.toContain("## Oikeudelliset perusteet");
+    expect(result).toContain("Hylätyt lakiviittaukset");
+    expect(result).toContain("liian alhainen relevanssi");
+  });
+
+  it("filters out references with empty citation", () => {
+    const emptyRef: LegalSearchResult = {
+      citation: "",
+      text: "Jotain tekstiä",
+      sourceType: "law",
+      relevanceScore: 0.9,
+    };
+    const result = generateDispute({
+      disputeType: "reklamaatio",
+      documentAnalysis: mockAnalysis,
+      legalReferences: [emptyRef],
+      userArguments: "Viallinen.",
+      respondent: "Kauppa",
+      language: "fi",
+    });
+
+    expect(result).toContain("tyhjä viittaus");
+  });
+
+  it("filters out references with invalid source type", () => {
+    const invalidRef: LegalSearchResult = {
+      citation: "Outo lähde 1 §",
+      text: "Tekstiä",
+      sourceType: "fabricated_source",
+      relevanceScore: 0.9,
+    };
+    const result = generateDispute({
+      disputeType: "reklamaatio",
+      documentAnalysis: mockAnalysis,
+      legalReferences: [invalidRef],
+      userArguments: "Viallinen.",
+      respondent: "Kauppa",
+      language: "fi",
+    });
+
+    expect(result).toContain("tuntematon lähdetyyppi");
+    expect(result).not.toContain("Outo lähde 1 §\n>");
+  });
+
+  it("keeps valid references with high relevance", () => {
+    const result = generateDispute({
+      disputeType: "reklamaatio",
+      documentAnalysis: mockAnalysis,
+      legalReferences: mockRefs, // 0.9 and 0.8 relevance
+      userArguments: "Viallinen.",
+      respondent: "Kauppa",
+      language: "fi",
+    });
+
+    expect(result).toContain("Kuluttajansuojalaki 5 luku 12 §");
+    expect(result).toContain("KKO:2024:42");
+  });
+
+  it("includes legality and verification disclaimer", () => {
+    const result = generateDispute({
+      disputeType: "reklamaatio",
+      documentAnalysis: mockAnalysis,
+      legalReferences: [],
+      userArguments: "Viallinen.",
+      respondent: "Kauppa",
+      language: "fi",
+    });
+
+    expect(result).toContain("LAINMUKAISUUS JA VERIFIOINTI");
+    expect(result).toContain("lainvastaisiin tai rikollisiin");
+    expect(result).toContain("Finlex");
+  });
+});
+
 describe("generateDispute elatusapu", () => {
   it("generates elatusapu_sopimus with calculation sections", () => {
     const result = generateDispute({

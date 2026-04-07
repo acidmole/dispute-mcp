@@ -68,4 +68,22 @@ describe("buildDocumentPrompt", () => {
     const prompt = buildDocumentPrompt(t, "");
     expect(prompt).toContain("ei ole oikeudellinen neuvo");
   });
+
+  it("includes legality requirements (no illegal use)", () => {
+    const t = DOCUMENT_TEMPLATES[0];
+    const prompt = buildDocumentPrompt(t, "");
+    expect(prompt).toContain("EHDOTTOMAT VAATIMUKSET");
+    expect(prompt).toContain("Lainmukaisuus");
+    expect(prompt).toContain("perättömiä");
+    expect(prompt).toContain("kieltäydy");
+  });
+
+  it("includes legal reference verification instructions", () => {
+    const t = DOCUMENT_TEMPLATES[0];
+    const prompt = buildDocumentPrompt(t, "");
+    expect(prompt).toContain("verifiointi");
+    expect(prompt).toContain("Älä koskaan keksi");
+    expect(prompt).toContain("search_legal");
+    expect(prompt).toContain("0.3");
+  });
 });

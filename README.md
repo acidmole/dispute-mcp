@@ -5,6 +5,17 @@ MCP-palvelin suomalaisten oikeudellisten riitojen luomiseen. Auttaa kuluttajia r
 Toimii täysin paikallisesti ilman ulkoisia API-avaimia. Embedding-malli (multilingual-e5-large) ladataan ja ajetaan lokaalisti.
 
 > **TÄRKEÄ HUOMAUTUS**: Tämä työkalu ei ole oikeudellinen neuvo eikä korvaa juristia. Työkalu tuottaa automaattisesti generoituja asiakirjoja, jotka voivat sisältää virheitä tai puutteita. Tarkista aina oikeudelliset väitteet ja asiakirjat pätevän juristin kanssa ennen niiden käyttämistä. Tekijät eivät vastaa työkalun tuottamien asiakirjojen oikeellisuudesta tai niiden käytöstä aiheutuvista seurauksista.
+>
+> **Ohjelmaa ei saa käyttää lainvastaisiin tai rikollisiin tarkoituksiin.** Se ei saa olla apuna perättömien tietojen esittämisessä viranomaiselle, väärennettyjen todisteiden laatimisessa, perusteettomien vaatimusten esittämisessä eikä vastapuolen kiusantekoon tai painostamiseen. Perättömien tietojen esittäminen viranomaiselle voi täyttää rikoslain (RL 16:8, 33:1, 36:1) mukaisten rikosten tunnusmerkistön.
+
+## Suojausmekanismit
+
+Ohjelma sisältää useita suojauskerroksia varmistaakseen, että generoidut asiakirjat ovat lainmukaisia ja perustuvat tarkistettuihin oikeuslähteisiin:
+
+1. **Lakiviittausten verifiointi.** Generaattori hylkää automaattisesti lakiviittaukset, joiden relevanssi (`relevanceScore`) on alle 0.3, joiden lähdetyyppiä ei tunnisteta tai joiden sisältö on tyhjä. Hylkäykset raportoidaan asiakirjassa avoimesti.
+2. **LLM-ohjeistus.** Prompt-ohjeistus kieltää LLM:ää keksimästä lainkohtia, KKO/KHO-ratkaisuja tai HE-numeroita ja velvoittaa hakemaan kaikki viittaukset `search_legal`-työkalulla vektoritietokannasta.
+3. **Lainvastaisuuden esto.** LLM:ää ohjeistetaan kieltäytymään pyynnöistä, jotka pyrkivät lainvastaiseen tai vilpilliseen lopputulokseen (perättömät väitteet, kiristys, kiusanteko, perusteettomat vaatimukset).
+4. **Disclaimer asiakirjassa.** Jokainen generoitu asiakirja sisältää selkeän huomautuksen lainmukaisuudesta ja vaatimuksesta tarkistuttaa viittaukset Finlexistä ja juristilla ennen käyttöä.
 
 ## Asiakirjatyypit
 
